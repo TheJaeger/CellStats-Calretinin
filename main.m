@@ -24,7 +24,7 @@ if ~isdir(folderCtrl)
     return;
 end
 
-filePatternCtrl = fullfile(folderCtrl, '*.tif');
+filePatternCtrl = fullfile(folderCtrl, '*.jpg');
 theFilesCtrl = dir(filePatternCtrl);
 [upperPathCtrl, deepestFolderCtrl, ~] = fileparts(folderCtrl);
 
@@ -35,7 +35,7 @@ if ~isdir(folderSch)
     return;
 end
 
-filePatternSch = fullfile(folderSch, '*.tif');
+filePatternSch = fullfile(folderSch, '*.jpg');
 theFilesSch = dir(filePatternSch);
 [upperPathCtrlSch, deepestFolderCtrlSch, ~] = fileparts(folderSch);
 
@@ -113,7 +113,7 @@ histogram('BinEdges',sE,'BinCounts',sNn,...
 hold off;
 title('Normalized Histograms of Global Control and Schizophrenia Groups')
 xlabel('Deviation Angle in Degrees');
-ylabel('Frequency');
+ylabel('Normalized Count');
 legend('Control','Schizophrenia');
 box on; grid on;
 saveFolder = fullfile(pwd, 'Output','Global');
@@ -177,7 +177,7 @@ p1.Color(4) = 0.8;
 p2.Color(4) = 0.8;
 % legend('Control','Schizophrenia')
 xlabel('Bin Number')
-ylabel('Frequency')
+ylabel('Normalized Count')
 hold off;
 saveFolder = fullfile(pwd, 'Output','Global');
 legend('Control','Schizophrenia');
