@@ -24,7 +24,7 @@ if ~isdir(folderCtrl)
     return;
 end
 
-filePatternCtrl = fullfile(folderCtrl, '*.jpg');
+filePatternCtrl = fullfile(folderCtrl, '*.tif');
 theFilesCtrl = dir(filePatternCtrl);
 [upperPathCtrl, deepestFolderCtrl, ~] = fileparts(folderCtrl);
 
@@ -35,7 +35,7 @@ if ~isdir(folderSch)
     return;
 end
 
-filePatternSch = fullfile(folderSch, '*.jpg');
+filePatternSch = fullfile(folderSch, '*.tif');
 theFilesSch = dir(filePatternSch);
 [upperPathCtrlSch, deepestFolderCtrlSch, ~] = fileparts(folderSch);
 
