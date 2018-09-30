@@ -72,7 +72,7 @@ for a = 1:length(theFiles)
     for b = 1:size(ROI,3)
         cntB = cntB + 1;
         cntBlabel = cntBlabel + 1;
-        fprintf(1, '\ta: Working on ROI %s. \n', cntBlabel);
+        fprintf(1, '\ta: Working on ROI %d. \n', cntBlabel);
         
         %% Name File
         data(cntB).FileName = baseFileName;

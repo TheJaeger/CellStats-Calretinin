@@ -11,6 +11,11 @@ clear all;
 close all;
 warning off;
 
+%% Variables
+%   Color selection for graphs, input RGB value in square-bracket
+colorC = [247,170,0]/255;
+colorS = [35,87,132]/255;
+
 %% Select Folder
 folderCtrl = uigetdir('', 'Select Control Image Directory');
 if ~isdir(folderCtrl)
@@ -19,7 +24,7 @@ if ~isdir(folderCtrl)
     return;
 end
 
-filePatternCtrl = fullfile(folderCtrl, '*.tif');
+filePatternCtrl = fullfile(folderCtrl, '*.jpg');
 theFilesCtrl = dir(filePatternCtrl);
 [upperPathCtrl, deepestFolderCtrl, ~] = fileparts(folderCtrl);
 
@@ -30,7 +35,7 @@ if ~isdir(folderSch)
     return;
 end
 
-filePatternSch = fullfile(folderSch, '*.tif');
+filePatternSch = fullfile(folderSch, '*.jpg');
 theFilesSch = dir(filePatternSch);
 [upperPathCtrlSch, deepestFolderCtrlSch, ~] = fileparts(folderSch);
 
@@ -83,26 +88,60 @@ for i = 1:(length(d)-1)
     end
 end
 
-%% Global Histogram
-nbins = 10;
+%% Normalized Global Histogram
+nbins = 20;
+[cN,cE] = histcounts(cVector,nbins);
+[sN,sE] = histcounts(sVector,nbins);
+
+cNn = (cN-min(cN)) / (max(cN)-min(cN));
+sNn = (sN-min(sN)) / (max(sN)-min(sN));
+
 gcf = figure;
-hC = histogram(cVector,nbins);
-hC.FaceColor = 'r';
-hC.EdgeAlpha = 0.5;
-hC.EdgeColor = 'none';
 hold on;
-hS = histogram(sVector, nbins);
-hS.FaceColor = 'b';
-hS.EdgeAlpha = 0.5;
+hC = histogram('BinEdges',cE,'BinCounts',cNn);
+hC.FaceColor = colorC;
+hC.EdgeAlpha = 0.8;
+hC.EdgeColor = 'none';
+hS = histogram('BinEdges',sE,'BinCounts',sNn);
+hS.FaceColor = colorS;
+hS.EdgeAlpha = 0.8;
 hS.EdgeColor = 'none';
+histogram('BinEdges',cE,'BinCounts',cNn,...
+    'DisplayStyle','stairs','EdgeColor',colorC);
+histogram('BinEdges',sE,'BinCounts',sNn,...
+    'DisplayStyle','stairs','EdgeColor',colorS);
 hold off;
-% legend('Control','Schizophrenia')
-title('Histograms of Global Control and Schizophrenia Groups')
+title('Normalized Histograms of Global Control and Schizophrenia Groups')
 xlabel('Deviation Angle in Degrees');
 ylabel('Frequency');
+legend('Control','Schizophrenia');
+box on; grid on;
 saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gcf, fullfile(saveFolder, sprintf('Global Histogram')),'-dpng');
+
+
+%% Global Histogram
+% nbins = 20;
+% gcf = figure;
+% hC = histogram(cVector,nbins,'Normalization','probability');
+% hC.FaceColor = colorC;
+% hC.EdgeAlpha = 0.5;
+% hC.EdgeColor = 'none';
+% hold on;
+% hS = histogram(sVector, nbins,'Normalization','probability');
+% hS.FaceColor = colorS;
+% hS.EdgeAlpha = 0.5;
+% hS.EdgeColor = 'none';
+% hold off;
+% % legend('Control','Schizophrenia')
+% title('Normalized Histograms of Global Control and Schizophrenia Groups')
+% xlabel('Deviation Angle in Degrees');
+% ylabel('Frequency');
+% legend('Control','Schizophrenia');
+% saveFolder = fullfile(pwd, 'Output','Global');
+% mkdir(saveFolder);
+% print(gcf, fullfile(saveFolder, sprintf('Global Histogram')),'-dpng');
 
 %% Binning Vector and Bar
 for i = 1:size(binROIc,2)
@@ -114,33 +153,50 @@ for i = 1:size(binROIs,2)
 end
 
 
+% Normalize bins
+BinVectorN = zeros(size(BinVector));
+BinVectorN(:,1) = (BinVector(:,1)-min(BinVector(:,1))) /...
+    (max(BinVector(:,1))-min(BinVector(:,1)));
+BinVectorN(:,2) = (BinVector(:,2)-min(BinVector(:,2))) /...
+    (max(BinVector(:,2))-min(BinVector(:,2)));
+
 gcg = figure;
-b = bar(BinVector);
-b(1).FaceColor = [0 0.447 0.7410];
-b(2).FaceColor = [0.8500 0.3250 0.0980];
+b = bar(BinVectorN);
+b(1).FaceColor = colorC;
+b(1).FaceAlpha = 0.8;
+b(1).EdgeColor = 'none';
+b(2).FaceColor = colorS;
+b(2).FaceAlpha = 0.8;
+b(2).EdgeColor = 'none';
 hold on
 x1 = [1:1:9]-0.15;
 x2 = [1:1:9]+0.15;
-plot(x1,BinVector(:,1), x2,BinVector(:,2));
+p1 = plot(x1,BinVectorN(:,1),'Color',colorC);
+p2 = plot(x2,BinVectorN(:,2),'Color',colorS);
+p1.Color(4) = 0.8;
+p2.Color(4) = 0.8;
 % legend('Control','Schizophrenia')
 xlabel('Bin Number')
 ylabel('Frequency')
 hold off;
 saveFolder = fullfile(pwd, 'Output','Global');
+legend('Control','Schizophrenia');
+box on; grid on;
 mkdir(saveFolder);
 print(gcg, fullfile(saveFolder, sprintf('Bar Plot')),'-dpng');
 
 %% Global CDF for Deviation
 gch = figure;
 g = cdfplot(cVector);
-set(g,'LineWidth',2);
+set(g,'LineWidth',2,'Color',colorC);
 hold on;
 h = cdfplot(sVector);
-set(h,'LineWidth',2);
+set(h,'LineWidth',2,'Color',colorS);
 hold off;
 xlabel('Deviation Angle in Degrees (x)');
 ylabel('CDF F(x)');
-% legend('Control','Schizophrenia', 'Location', 'southeast');
+legend('Control','Schizophrenia', 'Location', 'southeast');
+box on; grid on
 saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gch, fullfile(saveFolder, sprintf('CDF Plot (Deviation)')),'-dpng');
@@ -185,14 +241,14 @@ end
 %% Global CDF for MajorAxisLength
 gch = figure;
 g = cdfplot(cVector);
-set(g,'LineWidth',2);
+set(g,'LineWidth',2,'Color',colorC);
 hold on;
 h = cdfplot(sVector);
-set(h,'LineWidth',2);
+set(h,'LineWidth',2,'Color',colorS);
 hold off;
 xlabel('Length of Major Axis (x)');
 ylabel('CDF F(x)');
-% legend('Control','Schizophrenia', 'Location', 'southeast');
+legend('Control','Schizophrenia', 'Location', 'southeast');
 saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gch, fullfile(saveFolder, sprintf('CDF Plot (Length)')),'-dpng');
@@ -211,14 +267,17 @@ xxC = ones(1,length(sumCtrl));
 xxS = ones(1,length(sumSch)).*2;
 gci = figure;
 hold on;
-scatter(xxC,sumCtrl,'filled','MarkerEdgeColor','k');
-scatter(xxS,sumSch,'filled','MarkerEdgeColor','k');
+scatter(xxC,sumCtrl,'filled',...
+    'MarkerFaceColor',colorC,'MarkerEdgeColor','k');
+scatter(xxS,sumSch,'filled',...
+    'MarkerFaceColor',colorS,'MarkerEdgeColor','k');
 hold off;
 ylabel('No. of calretinin cells per ROI');
 ax = gca;
 ax.XTick = 1:numel(xx);
 ax.XTickLabel = xx;
 ax.XLim = [0 numel(xx)+1];
+box on, grid on;
 saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gci, fullfile(saveFolder, sprintf('Cell Count (per ROI)')),'-dpng');
@@ -252,13 +311,14 @@ verticalSchy = [0 max(pdfSch)];
 
 gcj = figure;
 hold on;
-plot(minCtrl:stepCtrl:maxCtrl,pdfCtrl, 'LineWidth',2);
-plot(minSch:stepSch:maxSch,pdfSch, 'LineWidth',2);
-line(verticalCtrlx,verticalCtrly,'Color','b','LineStyle','--','LineWidth',2);
-line(verticalSchx,verticalSchy,'Color','r','LineStyle','--','LineWidth',2);
+plot(minCtrl:stepCtrl:maxCtrl,pdfCtrl, 'LineWidth',2,'Color',colorC);
+plot(minSch:stepSch:maxSch,pdfSch, 'LineWidth',2,'Color',colorS);
+line(verticalCtrlx,verticalCtrly,'Color',colorC,'LineStyle','--','LineWidth',2);
+line(verticalSchx,verticalSchy,'Color',colorS,'LineStyle','--','LineWidth',2);
 xlabel('Number of cells per ROI');
 ylabel('Probability Density');
-% legend('Control','Schizophrenia');
+legend('Control','Schizophrenia');
+box on; grid on;
 saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gcj, fullfile(saveFolder, sprintf('Cell Count Dist')),'-dpng');
