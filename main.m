@@ -13,8 +13,13 @@ warning off;
 
 %% Variables
 %   Color selection for graphs, input RGB value in square-bracket
-colorC = [247,170,0]/255;
-colorS = [35,87,132]/255;
+colorC = [247,170,0]/255;   % Enter RGB triplets in square bracket for C
+colorS = [35,87,132]/255;   % Enter RGB triplets in square bracket for S
+nbins = 20;                 % No. of bins in histogram
+saveFolder = fullfile(pwd, 'Output','Global');
+statsFolder = fullfile(pwd, 'Excel Files');
+mkdir(saveFolder);
+mkdir(statsFolder);
 
 %% Select Folder
 folderCtrl = uigetdir('', 'Select Control Image Directory');
@@ -37,7 +42,7 @@ end
 
 filePatternSch = fullfile(folderSch, '*.jpg');
 theFilesSch = dir(filePatternSch);
-[upperPathCtrlSch, deepestFolderCtrlSch, ~] = fileparts(folderSch);
+[upperPathCtrlSch, deepestFolderSch, ~] = fileparts(folderSch);
 
 dataCtrl = getData(folderCtrl, theFilesCtrl, 1);
 fprintf(1, '\n');
@@ -89,14 +94,13 @@ for i = 1:(length(d)-1)
 end
 
 %% Normalized Global Histogram
-nbins = 20;
 [cN,cE] = histcounts(cVector,nbins);
 [sN,sE] = histcounts(sVector,nbins);
 
 cNn = (cN-min(cN)) / (max(cN)-min(cN));
 sNn = (sN-min(sN)) / (max(sN)-min(sN));
 
-gcf = figure;
+gcf = figure('visible','off');
 hold on;
 hC = histogram('BinEdges',cE,'BinCounts',cNn);
 hC.FaceColor = colorC;
@@ -113,11 +117,9 @@ histogram('BinEdges',sE,'BinCounts',sNn,...
 hold off;
 title('Normalized Histograms of Global Control and Schizophrenia Groups')
 xlabel('Deviation Angle in Degrees');
-ylabel('Normalized Count');
+ylabel('Frequency');
 legend('Control','Schizophrenia');
 box on; grid on;
-saveFolder = fullfile(pwd, 'Output','Global');
-mkdir(saveFolder);
 print(gcf, fullfile(saveFolder, sprintf('Global Histogram')),'-dpng');
 
 
@@ -147,7 +149,7 @@ print(gcf, fullfile(saveFolder, sprintf('Global Histogram')),'-dpng');
 for i = 1:size(binROIc,2)
     BinVector(i,1) = sum(binROIc(:,i));
 end
-   
+
 for i = 1:size(binROIs,2)
     BinVector(i,2) = sum(binROIs(:,i));
 end
@@ -160,7 +162,7 @@ BinVectorN(:,1) = (BinVector(:,1)-min(BinVector(:,1))) /...
 BinVectorN(:,2) = (BinVector(:,2)-min(BinVector(:,2))) /...
     (max(BinVector(:,2))-min(BinVector(:,2)));
 
-gcg = figure;
+gcg = figure('visible','off');
 b = bar(BinVectorN);
 b(1).FaceColor = colorC;
 b(1).FaceAlpha = 0.8;
@@ -177,7 +179,7 @@ p1.Color(4) = 0.8;
 p2.Color(4) = 0.8;
 % legend('Control','Schizophrenia')
 xlabel('Bin Number')
-ylabel('Normalized Count')
+ylabel('Frequency')
 hold off;
 saveFolder = fullfile(pwd, 'Output','Global');
 legend('Control','Schizophrenia');
@@ -186,7 +188,7 @@ mkdir(saveFolder);
 print(gcg, fullfile(saveFolder, sprintf('Bar Plot')),'-dpng');
 
 %% Global CDF for Deviation
-gch = figure;
+gch = figure('visible','off');
 g = cdfplot(cVector);
 set(g,'LineWidth',2,'Color',colorC);
 hold on;
@@ -239,7 +241,7 @@ for i = 1:(length(d)-1)
 end
 
 %% Global CDF for MajorAxisLength
-gch = figure;
+gch = figure('visible','off');
 g = cdfplot(cVector);
 set(g,'LineWidth',2,'Color',colorC);
 hold on;
@@ -265,7 +267,7 @@ end
 xx = {'Control','Schizophrenia'};
 xxC = ones(1,length(sumCtrl));
 xxS = ones(1,length(sumSch)).*2;
-gci = figure;
+gci = figure('visible','off');
 hold on;
 scatter(xxC,sumCtrl,'filled',...
     'MarkerFaceColor',colorC,'MarkerEdgeColor','k');
@@ -305,11 +307,11 @@ verticalCtrlx = [rangeCtrl(find(pdfCtrl == max(pdfCtrl)))...
     rangeCtrl(find(pdfCtrl == max(pdfCtrl)))];
 verticalCtrly = [0 max(pdfCtrl)];
 
-verticalSchx = [rangeSch(find(pdfSch == max(pdfSch))) ... 
+verticalSchx = [rangeSch(find(pdfSch == max(pdfSch))) ...
     rangeSch(find(pdfSch == max(pdfSch)))];
 verticalSchy = [0 max(pdfSch)];
 
-gcj = figure;
+gcj = figure('visible','off');
 hold on;
 plot(minCtrl:stepCtrl:maxCtrl,pdfCtrl, 'LineWidth',2,'Color',colorC);
 plot(minSch:stepSch:maxSch,pdfSch, 'LineWidth',2,'Color',colorS);
@@ -323,5 +325,33 @@ saveFolder = fullfile(pwd, 'Output','Global');
 mkdir(saveFolder);
 print(gcj, fullfile(saveFolder, sprintf('Cell Count Dist')),'-dpng');
 
+%% Save Binning Per ROI
+tableHeader{1} = 'ID';
+tableHeader{2} = 'ROI';
+for tL = 1:nbins
+    tableHeader{tL+2} = sprintf('Bin%d', tL);
+end
+
+tableFieldsC = array2table([transpose({dataCtrl.FileName}) transpose({dataCtrl.ROI})]);
+binROIExptC = [tableFieldsC array2table(binROIc)];
+binROIExptC.Properties.VariableNames = tableHeader;
+
+tableFieldsS = array2table([transpose({dataSch.FileName}) transpose({dataSch.ROI})]);
+binROIExptS = [tableFieldsS array2table(binROIs)];
+binROIExptS.Properties.VariableNames = tableHeader;
+
+writetable(binROIExptC,fullfile(statsFolder, [deepestFolderCtrl '.xlsx']),...
+    'WriteRowNames',true);
+writetable(binROIExptS,fullfile(statsFolder, [deepestFolderSch '.xlsx']),...
+    'WriteRowNames',true);
 
 
+
+
+
+
+    
+    
+    
+    
+    
